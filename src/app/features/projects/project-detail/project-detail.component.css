@@ -1,0 +1,254 @@
+.project-detail-page {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.detail-top-nav {
+  display: flex;
+  align-items: center;
+}
+
+.project-header-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.header-color-bar {
+  height: 6px;
+  width: 100%;
+}
+
+.header-main-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 24px;
+  flex-wrap: wrap;
+}
+
+.title-group {
+  flex: 1;
+  min-width: 280px;
+}
+
+.status-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 8px;
+}
+
+.date-tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+.date-tag .material-symbols-outlined {
+  font-size: 14px;
+}
+
+.project-title {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--color-text-main);
+  letter-spacing: -0.02em;
+}
+
+.project-description {
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+  margin-top: 6px;
+  line-height: 1.45;
+  max-width: 750px;
+}
+
+.header-progress-box {
+  background-color: var(--color-primary-light);
+  border: 1px solid var(--color-primary-border);
+  border-radius: var(--radius-lg);
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-width: 110px;
+}
+
+.progress-circle-val {
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: var(--color-primary);
+  line-height: 1;
+}
+
+.progress-circle-label {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--color-primary-text);
+  margin-top: 4px;
+  text-transform: uppercase;
+}
+
+.detail-progress-track {
+  height: 8px;
+  background-color: #f1f5f9;
+  border-radius: var(--radius-full);
+  overflow: hidden;
+  margin: 20px 0;
+}
+
+.detail-progress-fill {
+  height: 100%;
+  border-radius: var(--radius-full);
+  transition: width var(--transition-normal);
+}
+
+.stats-pills-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.stat-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background-color: var(--color-surface-hover);
+  font-size: 0.8125rem;
+  color: var(--color-text-secondary);
+}
+.stat-pill .material-symbols-outlined {
+  font-size: 16px;
+}
+.stat-pill.success {
+  background-color: var(--color-success-bg);
+  border-color: var(--color-success-border);
+  color: var(--color-success-text);
+}
+.stat-pill.warning {
+  background-color: var(--color-warning-bg);
+  border-color: var(--color-warning-border);
+  color: var(--color-warning-text);
+}
+.stat-pill.info {
+  background-color: var(--color-info-bg);
+  border-color: var(--color-info-border);
+  color: var(--color-info-text);
+}
+
+/* Tasks Table */
+.p-0 { padding: 0 !important; }
+
+.tasks-table-wrapper {
+  overflow-x: auto;
+}
+
+.tasks-table {
+  width: 100%;
+  border-collapse: collapse;
+  text-align: left;
+}
+
+.tasks-table th {
+  padding: 12px 16px;
+  background-color: #f8fafc;
+  border-bottom: 1px solid var(--color-border);
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.tasks-table td {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--color-border-subtle);
+  font-size: 0.8125rem;
+  vertical-align: middle;
+}
+
+.tasks-table tr:hover {
+  background-color: var(--color-surface-hover);
+}
+
+.task-title-text {
+  font-size: 0.875rem;
+  color: var(--color-text-main);
+  display: block;
+}
+
+.task-desc-text {
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+  margin-top: 2px;
+}
+
+.task-done .task-title-text {
+  text-decoration: line-through;
+  color: var(--color-text-muted);
+}
+
+.cell-date {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--color-text-secondary);
+}
+.cell-date .material-symbols-outlined {
+  font-size: 14px;
+  color: var(--color-text-muted);
+}
+
+.assignee-chip {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-toggle-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  background-color: #ffffff;
+  border: 1px solid var(--color-border);
+  color: var(--color-text-secondary);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+
+.btn-toggle-status:hover {
+  background-color: var(--color-primary-light);
+  border-color: var(--color-primary-border);
+  color: var(--color-primary);
+}
+
+.empty-tasks-state {
+  padding: 40px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.spinning-icon {
+  animation: spin 1s linear infinite;
+  font-size: 32px;
+  color: var(--color-primary);
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+

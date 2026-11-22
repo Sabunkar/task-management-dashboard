@@ -1,0 +1,523 @@
+.board-page {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+/* Feedback Notice Toast */
+.feedback-toast {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  background-color: var(--color-text-main);
+  color: #ffffff;
+  padding: 12px 20px;
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-xl);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  z-index: 1200;
+  animation: slideUpFade 250ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.feedback-toast .material-symbols-outlined {
+  color: var(--color-success);
+  font-size: 20px;
+}
+
+@keyframes slideUpFade {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Page Header */
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.page-title {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: var(--color-text-main);
+  letter-spacing: -0.02em;
+}
+
+.page-subtitle {
+  font-size: 0.875rem;
+  color: var(--color-text-secondary);
+  margin-top: 4px;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* Filter Bar */
+.filter-bar-card {
+  padding: 14px 20px;
+}
+
+.filter-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.search-input-box {
+  display: flex;
+  align-items: center;
+  background-color: var(--color-surface-hover);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  padding: 6px 12px;
+  gap: 8px;
+  flex: 1;
+  min-width: 260px;
+  max-width: 380px;
+}
+
+.search-icon {
+  color: var(--color-text-muted);
+  font-size: 18px;
+}
+
+.filter-input {
+  border: none;
+  background: transparent;
+  outline: none;
+  width: 100%;
+  font-family: inherit;
+  font-size: 0.8125rem;
+  color: var(--color-text-main);
+}
+
+.clear-btn {
+  background: transparent;
+  border: none;
+  color: var(--color-text-muted);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  padding: 2px;
+}
+.clear-btn:hover { color: var(--color-text-main); }
+
+.filter-controls-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.select-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+.filter-select {
+  padding: 6px 10px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
+  background-color: var(--color-surface);
+  font-family: inherit;
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  outline: none;
+  cursor: pointer;
+  transition: border-color var(--transition-fast);
+}
+
+.filter-select:focus {
+  border-color: var(--color-primary);
+}
+
+/* ==========================================================================
+   Kanban Board Columns Layout
+   ========================================================================== */
+.board-columns-wrapper {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  align-items: flex-start;
+}
+
+.kanban-column {
+  background-color: #f1f5f9;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition: background-color var(--transition-fast), border-color var(--transition-fast);
+}
+
+.column-header {
+  padding: 14px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--color-border);
+  background-color: var(--color-surface-hover);
+}
+
+.column-title-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.status-indicator-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+.dot-todo { background-color: #94a3b8; }
+.dot-inprogress { background-color: var(--color-warning); }
+.dot-completed { background-color: var(--color-success); }
+
+.column-title {
+  font-size: 0.9375rem;
+  font-weight: 700;
+  color: var(--color-text-main);
+  letter-spacing: -0.01em;
+}
+
+.column-count-badge {
+  background-color: var(--color-surface-hover);
+  color: var(--color-text-secondary);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  padding: 2px 7px;
+  border-radius: var(--radius-full);
+}
+.badge-warning-count {
+  background-color: var(--color-warning-bg);
+  color: var(--color-warning-text);
+  border: 1px solid var(--color-warning-border);
+}
+.badge-success-count {
+  background-color: var(--color-success-bg);
+  color: var(--color-success-text);
+  border: 1px solid var(--color-success-border);
+}
+
+.column-add-btn {
+  background: transparent;
+  border: none;
+  color: var(--color-text-muted);
+  width: 28px;
+  height: 28px;
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+}
+.column-add-btn:hover {
+  background-color: var(--color-surface);
+  color: var(--color-primary);
+  box-shadow: var(--shadow-xs);
+}
+.column-add-btn .material-symbols-outlined {
+  font-size: 18px;
+}
+
+/* Drop Zone Area */
+.column-drop-zone {
+  min-height: 480px;
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  transition: background-color var(--transition-fast);
+}
+
+/* Destination Column Highlight during Drag */
+.cdk-drop-list-receiving {
+  background-color: var(--color-surface-hover) !important;
+  border-color: var(--color-primary-border);
+}
+
+/* ==========================================================================
+   Kanban Task Cards
+   ========================================================================== */
+.kanban-task-card {
+  padding: 14px 16px;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-md);
+  cursor: grab;
+  user-select: none;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  transition: transform var(--transition-fast), box-shadow var(--transition-fast), border-color var(--transition-fast);
+}
+
+.kanban-task-card:hover {
+  border-color: var(--color-primary-border);
+  box-shadow: var(--shadow-md);
+  transform: translateY(-2px);
+}
+
+.kanban-task-card:active {
+  cursor: grabbing;
+}
+
+.card-inprogress {
+  border-left: 3px solid var(--color-warning);
+}
+
+.card-done {
+  border-left: 3px solid var(--color-success);
+  background-color: #fcfdfc;
+}
+
+.card-meta-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.card-project-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  background-color: #f1f5f9;
+  padding: 2px 7px;
+  border-radius: var(--radius-xs);
+  max-width: 170px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.project-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.card-task-title {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--color-text-main);
+  line-height: 1.35;
+}
+
+.text-done {
+  text-decoration: line-through;
+  color: var(--color-text-muted);
+}
+
+.card-task-desc {
+  font-size: 0.75rem;
+  color: var(--color-text-secondary);
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.card-meta-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-top: 1px solid var(--color-border-subtle);
+  padding-top: 8px;
+  font-size: 0.75rem;
+  color: var(--color-text-muted);
+}
+
+.due-date-box {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+.due-date-box .material-symbols-outlined {
+  font-size: 15px;
+}
+
+.due-date-box.overdue {
+  color: var(--color-danger);
+  font-weight: 600;
+}
+
+.overdue-tag {
+  background-color: var(--color-danger-bg);
+  border: 1px solid var(--color-danger-border);
+  color: var(--color-danger);
+  font-size: 0.625rem;
+  font-weight: 700;
+  padding: 1px 5px;
+  border-radius: var(--radius-xs);
+  margin-left: 2px;
+}
+
+.assignee-avatar {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background-color: #e0e7ff;
+  color: #4338ca;
+  font-size: 0.625rem;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.avatar-done {
+  background-color: var(--color-success-bg);
+  color: var(--color-success-text);
+}
+
+/* Empty Column State */
+.column-empty-state {
+  margin: auto 0;
+  padding: 40px 16px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  color: var(--color-text-muted);
+}
+.column-empty-state .material-symbols-outlined {
+  font-size: 32px;
+  opacity: 0.5;
+}
+.column-empty-state p {
+  font-size: 0.8125rem;
+  margin-bottom: 4px;
+}
+
+/* ==========================================================================
+   CDK Drag and Drop Visual Feedback
+   ========================================================================== */
+.cdk-drag-preview {
+  box-shadow: 0 15px 30px -5px rgb(0 0 0 / 0.15), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-primary-border);
+  background-color: var(--color-surface);
+  padding: 14px 16px;
+  opacity: 0.95;
+  transform: rotate(2deg);
+}
+
+.kanban-drag-placeholder {
+  background-color: var(--color-surface-hover);
+  border: 2px dashed var(--color-border-strong);
+  border-radius: var(--radius-md);
+  min-height: 90px;
+  transition: transform 200ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+.cdk-drag-animating {
+  transition: transform 200ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+.column-drop-zone.cdk-drop-list-dragging .kanban-task-card:not(.cdk-drag-placeholder) {
+  transition: transform 200ms cubic-bezier(0, 0, 0.2, 1);
+}
+
+/* Modals */
+.modal-header-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.modal-header-icon .material-symbols-outlined {
+  font-size: 20px;
+}
+
+.form-row {
+  display: flex;
+  gap: 14px;
+}
+
+.flex-1 { flex: 1; }
+
+.textarea {
+  resize: vertical;
+}
+
+.spinning-icon {
+  animation: spin 1s linear infinite;
+  font-size: 32px;
+  color: var(--color-primary);
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ==========================================================================
+   Responsive Breakpoints
+   ========================================================================== */
+@media (max-width: 1024px) {
+  .board-columns-wrapper {
+    display: flex;
+    overflow-x: auto;
+    padding-bottom: 16px;
+    scroll-snap-type: x mandatory;
+    gap: 16px;
+  }
+
+  .kanban-column {
+    min-width: 320px;
+    flex: 1;
+    scroll-snap-align: start;
+  }
+}
+
+@media (max-width: 640px) {
+  .kanban-column {
+    min-width: 290px;
+  }
+  .filter-bar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .search-input-box {
+    max-width: 100%;
+  }
+  .filter-controls-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .select-wrapper {
+    width: 100%;
+  }
+  .filter-select {
+    width: 100%;
+  }
+}
+

@@ -1,0 +1,570 @@
+<div class="projects-page">
+  <!-- Feedback Notice Toast -->
+  @if (feedbackNotice()) {
+    <div class="feedback-toast">
+      <span class="material-symbols-outlined">check_circle</span>
+      <span>{{ feedbackNotice() }}</span>
+    </div>
+  }
+
+  <!-- Page Header -->
+  <header class="page-header">
+    <div>
+      <div class="d-flex align-items-center gap-2">
+        <h1 class="page-title">My Projects</h1>
+        <span class="badge badge-primary">{{ totalProjectsCount() }} Workspaces</span>
+      </div>
+      <p class="page-subtitle">Organize team initiatives, track milestone deliverables, and monitor project velocity.</p>
+    </div>
+    <div class="header-actions">
+      <button type="button" class="btn btn-primary" (click)="openCreateModal()">
+        <span class="material-symbols-outlined">add</span>
+        <span>Create Project</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Project Statistics Metric Cards -->
+  <section class="project-stats-grid">
+    <div class="card stat-card">
+      <div class="stat-icon-box bg-primary-light text-primary">
+        <span class="material-symbols-outlined">folder_open</span>
+      </div>
+      <div class="stat-meta">
+        <span class="stat-label">Total Projects</span>
+        <strong class="stat-value">{{ totalProjectsCount() }}</strong>
+      </div>
+    </div>
+
+    <div class="card stat-card">
+      <div class="stat-icon-box bg-info-light text-info">
+        <span class="material-symbols-outlined">play_circle</span>
+      </div>
+      <div class="stat-meta">
+        <span class="stat-label">Active Projects</span>
+        <strong class="stat-value">{{ activeProjectsCount() }}</strong>
+      </div>
+    </div>
+
+    <div class="card stat-card">
+      <div class="stat-icon-box bg-success-light text-success">
+        <span class="material-symbols-outlined">check_circle</span>
+      </div>
+      <div class="stat-meta">
+        <span class="stat-label">Completed</span>
+        <strong class="stat-value">{{ completedProjectsCount() }}</strong>
+      </div>
+    </div>
+
+    <div class="card stat-card">
+      <div class="stat-icon-box bg-warning-light text-warning">
+        <span class="material-symbols-outlined">pause_circle</span>
+      </div>
+      <div class="stat-meta">
+        <span class="stat-label">On Hold</span>
+        <strong class="stat-value">{{ onHoldProjectsCount() }}</strong>
+      </div>
+    </div>
+  </section>
+
+  <!-- Search, Filter & Sorting Bar -->
+  <section class="card filter-bar-card">
+    <div class="filter-controls">
+      <!-- Search Input -->
+      <div class="search-input-box">
+        <span class="material-symbols-outlined search-icon">search</span>
+        <input 
+          type="text" 
+          placeholder="Filter by project name or description..." 
+          class="filter-input"
+          [value]="searchTerm()"
+          (input)="onSearchChange($any($event.target).value)"
+        />
+        @if (searchTerm()) {
+          <button type="button" class="clear-btn" (click)="clearSearch()" title="Clear search">
+            <span class="material-symbols-outlined">close</span>
+          </button>
+        }
+      </div>
+
+      <!-- Status Pills -->
+      <div class="status-pills-row">
+        <button 
+          type="button" 
+          class="status-filter-btn" 
+          [class.active]="selectedStatus() === 'All'"
+          (click)="setStatusFilter('All')"
+        >
+          All
+        </button>
+        <button 
+          type="button" 
+          class="status-filter-btn" 
+          [class.active]="selectedStatus() === 'Active'"
+          (click)="setStatusFilter('Active')"
+        >
+          Active
+        </button>
+        <button 
+          type="button" 
+          class="status-filter-btn" 
+          [class.active]="selectedStatus() === 'Planning'"
+          (click)="setStatusFilter('Planning')"
+        >
+          Planning
+        </button>
+        <button 
+          type="button" 
+          class="status-filter-btn" 
+          [class.active]="selectedStatus() === 'Completed'"
+          (click)="setStatusFilter('Completed')"
+        >
+          Completed
+        </button>
+        <button 
+          type="button" 
+          class="status-filter-btn" 
+          [class.active]="selectedStatus() === 'On Hold'"
+          (click)="setStatusFilter('On Hold')"
+        >
+          On Hold
+        </button>
+      </div>
+
+      <!-- Sorting Controls -->
+      <div class="sort-controls">
+        <span class="sort-label">Sort:</span>
+        <button 
+          type="button" 
+          class="sort-btn" 
+          [class.active]="sortBy() === 'name'"
+          (click)="setSortBy('name')"
+        >
+          <span>Name</span>
+          @if (sortBy() === 'name') {
+            <span class="material-symbols-outlined sort-icon">
+              {{ sortOrder() === 'asc' ? 'arrow_upward' : 'arrow_downward' }}
+            </span>
+          }
+        </button>
+        <button 
+          type="button" 
+          class="sort-btn" 
+          [class.active]="sortBy() === 'dueDate'"
+          (click)="setSortBy('dueDate')"
+        >
+          <span>Due Date</span>
+          @if (sortBy() === 'dueDate') {
+            <span class="material-symbols-outlined sort-icon">
+              {{ sortOrder() === 'asc' ? 'arrow_upward' : 'arrow_downward' }}
+            </span>
+          }
+        </button>
+        <button 
+          type="button" 
+          class="sort-btn" 
+          [class.active]="sortBy() === 'progress'"
+          (click)="setSortBy('progress')"
+        >
+          <span>Progress</span>
+          @if (sortBy() === 'progress') {
+            <span class="material-symbols-outlined sort-icon">
+              {{ sortOrder() === 'asc' ? 'arrow_upward' : 'arrow_downward' }}
+            </span>
+          }
+        </button>
+
+        <button 
+          type="button" 
+          class="adv-toggle-btn"
+          [class.active]="showAdvancedFilters() || hasActiveFilters()"
+          (click)="toggleAdvancedFilters()"
+          title="Toggle advanced project filters"
+        >
+          <span class="material-symbols-outlined">tune</span>
+          <span>Filters</span>
+          @if (activeFiltersCount() > 0) {
+            <span class="filter-count-badge">{{ activeFiltersCount() }}</span>
+          }
+        </button>
+      </div>
+    </div>
+
+    <!-- Advanced Filters Panel -->
+    @if (showAdvancedFilters()) {
+      <div class="advanced-filters-panel">
+        <!-- Progress Range Selector -->
+        <div class="adv-filter-group">
+          <span class="adv-label">Progress:</span>
+          <div class="progress-pills-row">
+            <button 
+              type="button" 
+              class="adv-pill-btn" 
+              [class.active]="progressRange() === 'All'"
+              (click)="setProgressRange('All')"
+            >
+              All
+            </button>
+            <button 
+              type="button" 
+              class="adv-pill-btn" 
+              [class.active]="progressRange() === '0-25'"
+              (click)="setProgressRange('0-25')"
+            >
+              0 - 25%
+            </button>
+            <button 
+              type="button" 
+              class="adv-pill-btn" 
+              [class.active]="progressRange() === '26-75'"
+              (click)="setProgressRange('26-75')"
+            >
+              26 - 75%
+            </button>
+            <button 
+              type="button" 
+              class="adv-pill-btn" 
+              [class.active]="progressRange() === '76-100'"
+              (click)="setProgressRange('76-100')"
+            >
+              76 - 100%
+            </button>
+          </div>
+        </div>
+
+        <!-- Due Date Range -->
+        <div class="adv-filter-group">
+          <span class="adv-label">Due Date Range:</span>
+          <div class="date-range-inputs">
+            <input 
+              type="date" 
+              class="adv-date-input" 
+              [value]="dueDateFrom()" 
+              (change)="setDueDateFrom($any($event.target).value)" 
+              placeholder="From"
+              title="Due date from"
+            />
+            <span class="adv-separator">to</span>
+            <input 
+              type="date" 
+              class="adv-date-input" 
+              [value]="dueDateTo()" 
+              (change)="setDueDateTo($any($event.target).value)" 
+              placeholder="To"
+              title="Due date to"
+            />
+          </div>
+        </div>
+
+        @if (hasActiveFilters()) {
+          <div class="adv-actions">
+            <button type="button" class="btn btn-sm btn-outline-danger" (click)="resetFilters()">
+              <span class="material-symbols-outlined" style="font-size: 16px;">restart_alt</span>
+              <span>Reset All</span>
+            </button>
+          </div>
+        }
+      </div>
+    }
+
+    <!-- Active Filter Badges Bar -->
+    @if (hasActiveFilters()) {
+      <div class="active-filters-chips-bar">
+        <span class="active-chips-label">Active Filters:</span>
+        <div class="active-chips-list">
+          @if (searchTerm().trim()) {
+            <span class="filter-chip">
+              <span class="chip-text">Search: "{{ searchTerm() }}"</span>
+              <button type="button" class="chip-remove" (click)="clearFilter('search')">
+                <span class="material-symbols-outlined">close</span>
+              </button>
+            </span>
+          }
+          @if (selectedStatus() !== 'All') {
+            <span class="filter-chip">
+              <span class="chip-text">Status: {{ selectedStatus() }}</span>
+              <button type="button" class="chip-remove" (click)="clearFilter('status')">
+                <span class="material-symbols-outlined">close</span>
+              </button>
+            </span>
+          }
+          @if (progressRange() !== 'All') {
+            <span class="filter-chip">
+              <span class="chip-text">Progress: {{ progressRange() }}%</span>
+              <button type="button" class="chip-remove" (click)="clearFilter('progress')">
+                <span class="material-symbols-outlined">close</span>
+              </button>
+            </span>
+          }
+          @if (dueDateFrom()) {
+            <span class="filter-chip">
+              <span class="chip-text">From: {{ dueDateFrom() }}</span>
+              <button type="button" class="chip-remove" (click)="clearFilter('dueDateFrom')">
+                <span class="material-symbols-outlined">close</span>
+              </button>
+            </span>
+          }
+          @if (dueDateTo()) {
+            <span class="filter-chip">
+              <span class="chip-text">To: {{ dueDateTo() }}</span>
+              <button type="button" class="chip-remove" (click)="clearFilter('dueDateTo')">
+                <span class="material-symbols-outlined">close</span>
+              </button>
+            </span>
+          }
+
+          <button type="button" class="clear-all-link-btn" (click)="resetFilters()">
+            Clear All
+          </button>
+        </div>
+      </div>
+    }
+  </section>
+
+  <!-- Project Cards Grid -->
+  @if (isLoading()) {
+    <div class="card p-5 text-center">
+      <span class="material-symbols-outlined spinning-icon">sync</span>
+      <p style="margin-top: 8px; color: var(--color-text-secondary);">Loading project workspaces...</p>
+    </div>
+  } @else if (filteredProjects().length === 0) {
+    <!-- Empty State -->
+    <div class="card empty-card">
+      <div class="empty-icon-circle">
+        <span class="material-symbols-outlined">folder_off</span>
+      </div>
+      <h3>No projects match your filter</h3>
+      <p>Try adjusting your search criteria or clear the filters to view all workspaces.</p>
+      <div class="d-flex gap-2" style="margin-top: 12px;">
+        <button type="button" class="btn btn-secondary" (click)="resetFilters()">Reset Filters</button>
+        <button type="button" class="btn btn-primary" (click)="openCreateModal()">Create New Project</button>
+      </div>
+    </div>
+  } @else {
+    <section class="projects-grid">
+      @for (project of filteredProjects(); track project.id) {
+        <div class="card project-card">
+          <!-- Top Accent Color Indicator -->
+          <div class="card-accent-bar" [style.background-color]="project.color"></div>
+
+          <div class="card-body">
+            <!-- Header Row -->
+            <div class="card-top-row">
+              <div class="project-identity">
+                <div class="color-badge" [style.background-color]="project.color"></div>
+                <h3 class="project-name" [title]="project.name">
+                  <a [routerLink]="['/projects', project.id]" class="project-title-link">
+                    {{ project.name }}
+                  </a>
+                </h3>
+              </div>
+              <span class="badge" [ngClass]="getStatusBadgeClass(project.status)">
+                {{ project.status }}
+              </span>
+            </div>
+
+            <!-- Description -->
+            <p class="project-description">{{ project.description }}</p>
+
+            <!-- Dates Range -->
+            <div class="dates-meta">
+              <span class="material-symbols-outlined">calendar_today</span>
+              <span>{{ project.startDate }} – {{ project.dueDate }}</span>
+            </div>
+
+            <!-- Reactive Progress Bar -->
+            <div class="progress-section">
+              <div class="progress-labels">
+                <span class="label">Calculated Progress</span>
+                <strong class="val">{{ project.progress }}%</strong>
+              </div>
+              <div class="progress-track">
+                <div 
+                  class="progress-fill" 
+                  [style.width.%]="project.progress"
+                  [style.background-color]="project.color"
+                ></div>
+              </div>
+            </div>
+
+            <!-- Deliverables & Members Count -->
+            <div class="deliverables-row">
+              <div class="deliverable-item">
+                <span class="material-symbols-outlined">check_box</span>
+                <span><strong>{{ project.completedTasksCount }}</strong>/{{ project.tasksCount }} tasks done</span>
+              </div>
+              <div class="deliverable-item">
+                <span class="material-symbols-outlined">group</span>
+                <span>{{ project.membersCount || 1 }} team members</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Card Actions Footer -->
+          <div class="card-footer project-card-footer">
+            <a [routerLink]="['/projects', project.id]" class="btn btn-secondary btn-sm">
+              <span class="material-symbols-outlined">visibility</span>
+              <span>View Details</span>
+            </a>
+
+            <div class="card-actions-right">
+              <button 
+                type="button" 
+                class="btn-icon-action" 
+                (click)="openEditModal(project, $event)" 
+                title="Edit project"
+              >
+                <span class="material-symbols-outlined">edit</span>
+              </button>
+              <button 
+                type="button" 
+                class="btn-icon-action text-danger" 
+                (click)="openDeleteModal(project, $event)" 
+                title="Delete project"
+              >
+                <span class="material-symbols-outlined">delete</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      }
+    </section>
+  }
+</div>
+
+<!-- Create / Edit Project Modal Dialog -->
+@if (projectModalOpen()) {
+  <div class="modal-backdrop" (click)="closeModal()">
+    <div class="modal-dialog" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <div class="d-flex align-items-center gap-2">
+          <div class="modal-header-icon" [style.background-color]="projectForm.get('color')?.value + '20'" [style.color]="projectForm.get('color')?.value">
+            <span class="material-symbols-outlined">{{ isEditing() ? 'edit' : 'add_circle' }}</span>
+          </div>
+          <div>
+            <h3 class="modal-title">{{ isEditing() ? 'Edit Project Details' : 'Create New Project Workspace' }}</h3>
+            <p class="modal-subtitle">Define timeline, status, and milestone objectives.</p>
+          </div>
+        </div>
+        <button type="button" class="btn-icon" (click)="closeModal()" title="Close dialog">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+
+      <form [formGroup]="projectForm" (ngSubmit)="saveProject()">
+        <div class="modal-body">
+          <!-- Project Name Field -->
+          <div class="form-group">
+            <label class="form-label">Project Name *</label>
+            <input 
+              type="text" 
+              class="form-control" 
+              placeholder="e.g. Enterprise Microservices Gateway" 
+              formControlName="name"
+            />
+            @if (projectForm.get('name')?.touched && projectForm.get('name')?.invalid) {
+              <span class="form-error">Project name is required (min 3 characters).</span>
+            }
+          </div>
+
+          <!-- Description Field -->
+          <div class="form-group">
+            <label class="form-label">Project Description *</label>
+            <textarea 
+              class="form-control textarea" 
+              rows="3" 
+              placeholder="Detail the scope, core deliverables, and success metrics..." 
+              formControlName="description"
+            ></textarea>
+            @if (projectForm.get('description')?.touched && projectForm.get('description')?.invalid) {
+              <span class="form-error">Please provide a descriptive overview (min 10 characters).</span>
+            }
+          </div>
+
+          <!-- Status and Color Row -->
+          <div class="form-row">
+            <div class="form-group flex-1">
+              <label class="form-label">Status *</label>
+              <select class="form-control" formControlName="status">
+                <option value="Active">Active</option>
+                <option value="Planning">Planning</option>
+                <option value="Completed">Completed</option>
+                <option value="On Hold">On Hold</option>
+              </select>
+            </div>
+
+            <!-- Color Palette Selector -->
+            <div class="form-group flex-1">
+              <label class="form-label">Color Identifier</label>
+              <div class="color-picker-row">
+                @for (c of colorPalette; track c) {
+                  <button 
+                    type="button" 
+                    class="color-pill-btn" 
+                    [style.background-color]="c"
+                    [class.selected]="projectForm.get('color')?.value === c"
+                    (click)="projectForm.patchValue({ color: c })"
+                    [title]="c"
+                  ></button>
+                }
+              </div>
+            </div>
+          </div>
+
+          <!-- Start Date & Due Date Row -->
+          <div class="form-row">
+            <div class="form-group flex-1">
+              <label class="form-label">Start Date *</label>
+              <input type="date" class="form-control" formControlName="startDate" />
+            </div>
+            <div class="form-group flex-1">
+              <label class="form-label">Due Date *</label>
+              <input type="date" class="form-control" formControlName="dueDate" />
+            </div>
+          </div>
+          @if (projectForm.hasError('dateRangeInvalid') && (projectForm.get('startDate')?.touched || projectForm.get('dueDate')?.touched)) {
+            <span class="form-error">Due date must be equal to or later than the start date.</span>
+          }
+        </div>
+
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" (click)="closeModal()">Cancel</button>
+          <button type="submit" class="btn btn-primary" [disabled]="projectForm.invalid">
+            <span class="material-symbols-outlined">check</span>
+            <span>{{ isEditing() ? 'Save Changes' : 'Create Project' }}</span>
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+}
+
+<!-- Delete Confirmation Modal Dialog -->
+@if (deleteModalOpen() && projectToDelete()) {
+  <div class="modal-backdrop" (click)="closeDeleteModal()">
+    <div class="modal-dialog delete-dialog" (click)="$event.stopPropagation()">
+      <div class="delete-icon-circle">
+        <span class="material-symbols-outlined">warning</span>
+      </div>
+
+      <h3 class="delete-title">Delete Project Workspace?</h3>
+      <p class="delete-message">
+        Are you sure you want to permanently delete <strong>"{{ projectToDelete()?.name }}"</strong>?
+      </p>
+
+      <div class="delete-warning-box">
+        <span class="material-symbols-outlined">info</span>
+        <span>All associated tasks belonging to this project will be removed to prevent orphaned workspace references.</span>
+      </div>
+
+      <div class="delete-actions-row">
+        <button type="button" class="btn btn-secondary" (click)="closeDeleteModal()">Cancel</button>
+        <button type="button" class="btn btn-danger" (click)="confirmDelete()">
+          <span class="material-symbols-outlined">delete</span>
+          <span>Delete Project</span>
+        </button>
+      </div>
+    </div>
+  </div>
+}
+

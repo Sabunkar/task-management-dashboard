@@ -1,0 +1,472 @@
+<div class="app-layout" [class.sidebar-collapsed]="sidebarCollapsed()">
+  <!-- Mobile Backdrop Overlay -->
+  @if (mobileMenuOpen()) {
+    <div class="mobile-backdrop" (click)="closeMobileMenu()"></div>
+  }
+
+  <!-- Sidebar -->
+  <aside class="sidebar" [class.mobile-open]="mobileMenuOpen()">
+    <div class="sidebar-header">
+      <a routerLink="/dashboard" class="brand">
+        <div class="brand-icon">
+          <span class="material-symbols-outlined">bolt</span>
+        </div>
+        @if (!sidebarCollapsed()) {
+          <div class="brand-text">
+            <span class="brand-name">PulseTask</span>
+            <span class="brand-tag">Workspace</span>
+          </div>
+        }
+      </a>
+      <button 
+        type="button" 
+        class="collapse-btn d-none-mobile" 
+        (click)="toggleSidebar()" 
+        [title]="sidebarCollapsed() ? 'Expand sidebar' : 'Collapse sidebar'"
+        aria-label="Toggle sidebar"
+      >
+        <span class="material-symbols-outlined">
+          {{ sidebarCollapsed() ? 'chevron_right' : 'chevron_left' }}
+        </span>
+      </button>
+      <button 
+        type="button" 
+        class="collapse-btn d-mobile-only" 
+        (click)="closeMobileMenu()" 
+        title="Close menu"
+        aria-label="Close menu"
+      >
+        <span class="material-symbols-outlined">close</span>
+      </button>
+    </div>
+
+    <!-- Navigation Menu -->
+    <nav class="sidebar-nav">
+      <div class="nav-section-title" *ngIf="!sidebarCollapsed()">WORKSPACE</div>
+      <ul class="nav-list">
+        @for (item of navItems; track item.path) {
+          <li class="nav-item">
+            <a 
+              [routerLink]="item.path" 
+              routerLinkActive="active" 
+              class="nav-link" 
+              [attr.data-tooltip]="item.label"
+              [title]="sidebarCollapsed() ? item.label : ''"
+              (click)="closeMobileMenu()"
+            >
+              <span class="material-symbols-outlined nav-icon">{{ item.icon }}</span>
+              @if (!sidebarCollapsed()) {
+                <span class="nav-label">{{ item.label }}</span>
+                @if (item.badge && item.path === '/notifications' && unreadCount() > 0) {
+                  <span class="badge badge-primary nav-badge">{{ unreadCount() }}</span>
+                }
+              }
+            </a>
+          </li>
+        }
+      </ul>
+    </nav>
+
+    <!-- Sidebar Footer / User Quick Info -->
+    <div class="sidebar-footer">
+      <div class="user-chip">
+        @if (currentUser()?.avatarUrl) {
+          <img [src]="currentUser()?.avatarUrl" alt="Avatar" class="avatar" style="object-fit: cover;" />
+        } @else {
+          <div class="avatar">{{ userInitials() }}</div>
+        }
+        @if (!sidebarCollapsed()) {
+          <div class="user-details">
+            <span class="user-name">{{ userName() }}</span>
+            <span class="user-role">{{ userRole() }}</span>
+          </div>
+          <button type="button" (click)="onLogout()" class="logout-icon-btn" title="Sign Out" aria-label="Sign Out">
+            <span class="material-symbols-outlined">logout</span>
+          </button>
+        }
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main Content Wrapper -->
+  <div class="main-wrapper">
+    <!-- Top Navigation Bar -->
+    <header class="topbar">
+      <div class="topbar-left">
+        <!-- Current Page Title -->
+        <div class="topbar-title-container">
+          <h2 class="topbar-page-title">{{ pageTitle() }}</h2>
+        </div>
+
+        <!-- Global Search Container with Dropdown Results -->
+        <div class="search-container">
+          <form class="search-box" (submit)="onSearchSubmit($event)">
+            <span class="material-symbols-outlined search-icon">search</span>
+            <input 
+              type="text" 
+              placeholder="Search tasks or projects (Ctrl+K or Enter)..." 
+              class="search-input"
+              [ngModel]="searchQuery()"
+              (ngModelChange)="onSearchInput($event)"
+              (focus)="onSearchFocus()"
+              (keydown)="onSearchKeydown($event)"
+              name="searchQuery"
+              autocomplete="off"
+            />
+            @if (searchQuery()) {
+              <button type="button" class="search-clear-btn" (click)="clearSearch()" title="Clear search">
+                <span class="material-symbols-outlined">close</span>
+              </button>
+            }
+          </form>
+
+          <!-- Search Results Dropdown -->
+          @if (searchDropdownOpen()) {
+            <div class="search-dropdown">
+              <!-- Loading State -->
+              @if (searchLoading()) {
+                <div class="search-dropdown-loading">
+                  <span class="search-spinner"></span>
+                  <span>Searching workspace...</span>
+                </div>
+              } @else if (searchQuery().trim().length === 0) {
+                <!-- Initial Helpful State -->
+                <div class="search-dropdown-initial">
+                  <div class="search-initial-icon">
+                    <span class="material-symbols-outlined">manage_search</span>
+                  </div>
+                  <div class="search-initial-text">
+                    <strong>Quick Workspace Search</strong>
+                    <p>Type a keyword to dynamically search across all tasks and projects.</p>
+                  </div>
+                  <div class="search-quick-tags">
+                    <button type="button" class="quick-tag" (click)="onSearchInput('Pulse')">Pulse</button>
+                    <button type="button" class="quick-tag" (click)="onSearchInput('API')">API</button>
+                    <button type="button" class="quick-tag" (click)="onSearchInput('Design')">Design</button>
+                    <button type="button" class="quick-tag" (click)="onSearchInput('Mobile')">Mobile</button>
+                  </div>
+                </div>
+              } @else if (searchResults().totalCount === 0) {
+                <!-- Empty State -->
+                <div class="search-dropdown-empty">
+                  <span class="material-symbols-outlined empty-icon">search_off</span>
+                  <strong>No matches found</strong>
+                  <p>No tasks or projects matched "<em>{{ searchQuery() }}</em>". Try another keyword or check spelling.</p>
+                </div>
+              } @else {
+                <!-- Results Content Grouped into Projects and Tasks -->
+                <div class="search-results-list">
+                  <!-- Projects Group -->
+                  @if (searchResults().projects.length > 0) {
+                    <div class="search-results-group">
+                      <div class="group-header">
+                        <span class="material-symbols-outlined group-icon">folder_open</span>
+                        <span class="group-title">Projects</span>
+                        <span class="group-count">({{ searchResults().projects.length }})</span>
+                      </div>
+
+                      @for (proj of searchResults().projects; track proj.id) {
+                        <div class="search-result-item project-item" (click)="selectProjectResult(proj)">
+                          <div class="result-icon-box" [style.background-color]="proj.color + '1a'" [style.color]="proj.color">
+                            <span class="material-symbols-outlined">folder</span>
+                          </div>
+                          <div class="result-details">
+                            <div class="result-title-row">
+                              <span class="result-title">{{ proj.name }}</span>
+                              <span class="badge" [class.badge-primary]="proj.status === 'Active'" [class.badge-success]="proj.status === 'Completed'">
+                                {{ proj.status }}
+                              </span>
+                            </div>
+                            <p class="result-description">{{ proj.description }}</p>
+                            <div class="result-meta-row">
+                              <span>{{ proj.progress }}% completed</span>
+                              <span>•</span>
+                              <span>Due {{ proj.dueDate | date:'mediumDate' }}</span>
+                            </div>
+                          </div>
+                        </div>
+                      }
+                    </div>
+                  }
+
+                  <!-- Tasks Group -->
+                  @if (searchResults().tasks.length > 0) {
+                    <div class="search-results-group">
+                      <div class="group-header">
+                        <span class="material-symbols-outlined group-icon">task_alt</span>
+                        <span class="group-title">Tasks</span>
+                        <span class="group-count">({{ searchResults().tasks.length }})</span>
+                      </div>
+
+                      @for (task of searchResults().tasks; track task.id) {
+                        <div class="search-result-item task-item" (click)="selectTaskResult(task)">
+                          <div class="result-icon-box task-icon" [class.done]="task.status === 'Completed'">
+                            <span class="material-symbols-outlined">
+                              {{ task.status === 'Completed' ? 'check_circle' : 'assignment' }}
+                            </span>
+                          </div>
+                          <div class="result-details">
+                            <div class="result-title-row">
+                              <span class="result-title">{{ task.title }}</span>
+                              <div class="badges-row">
+                                <span class="badge priority-badge" [class.badge-danger]="task.priority === 'High'" [class.badge-warning]="task.priority === 'Medium'" [class.badge-secondary]="task.priority === 'Low'">
+                                  {{ task.priority }}
+                                </span>
+                                <span class="badge" [class.badge-success]="task.status === 'Completed'" [class.badge-primary]="task.status === 'In Progress'" [class.badge-secondary]="task.status === 'To Do'">
+                                  {{ task.status }}
+                                </span>
+                              </div>
+                            </div>
+                            <p class="result-description">{{ task.description }}</p>
+                            <div class="result-meta-row">
+                              @if (task.projectName) {
+                                <span class="project-tag">{{ task.projectName }}</span>
+                                <span>•</span>
+                              }
+                              <span>Due {{ task.dueDate | date:'mediumDate' }}</span>
+                            </div>
+                          </div>
+                        </div>
+                      }
+                    </div>
+                  }
+                </div>
+
+                <div class="search-dropdown-footer">
+                  <span>Press <strong>Enter</strong> to open all in Tasks view</span>
+                  <span class="footer-hint">Esc to close</span>
+                </div>
+              }
+            </div>
+          }
+        </div>
+      </div>
+
+      <div class="topbar-right">
+        <!-- Notifications Bell & Dropdown -->
+        <div class="dropdown-container">
+          <button 
+            type="button" 
+            class="topbar-icon-btn" 
+            [class.active]="notificationDropdownOpen()"
+            (click)="toggleNotificationDropdown($event)" 
+            title="Notifications"
+            aria-label="View notifications"
+          >
+            <span class="material-symbols-outlined">notifications</span>
+            @if (unreadCount() > 0) {
+              <span class="notification-badge">{{ unreadCount() }}</span>
+            }
+          </button>
+
+          <!-- Notification Dropdown Menu -->
+          @if (notificationDropdownOpen()) {
+            <div class="dropdown-menu notification-menu">
+              <div class="dropdown-header">
+                <div class="d-flex align-items-center gap-2">
+                  <span class="dropdown-title">Notifications</span>
+                  @if (unreadCount() > 0) {
+                    <span class="badge badge-primary">{{ unreadCount() }} new</span>
+                  }
+                </div>
+                @if (unreadCount() > 0) {
+                  <button type="button" class="btn-text-link" (click)="markAllNotificationsRead()">
+                    Mark all read
+                  </button>
+                }
+              </div>
+
+              <div class="notification-list">
+                @for (item of notifications(); track item.id) {
+                  <div class="notification-item" [class.unread]="!item.read" (click)="onNotificationClick(item)" style="cursor: pointer;">
+                    <div class="notif-icon-box" [style.background-color]="item.color + '18'" [style.color]="item.color">
+                      <span class="material-symbols-outlined">{{ item.icon || 'notifications' }}</span>
+                    </div>
+                    <div class="notif-content">
+                      <div class="notif-title-row">
+                        <strong class="notif-title">{{ item.title }}</strong>
+                        <span class="notif-time">{{ formatTimeAgo(item.createdAt) }}</span>
+                      </div>
+                      <p class="notif-message">{{ item.message }}</p>
+                    </div>
+                  </div>
+                }
+                @if (notifications().length === 0) {
+                  <div style="padding: 24px; text-align: center; color: var(--color-text-secondary); font-size: 0.8125rem;">
+                    No notifications
+                  </div>
+                }
+              </div>
+
+              <div class="dropdown-footer">
+                <a routerLink="/notifications" (click)="closeAllDropdowns()" class="footer-link">
+                  View all notifications
+                  <span class="material-symbols-outlined">arrow_forward</span>
+                </a>
+              </div>
+            </div>
+          }
+        </div>
+
+        <div class="topbar-divider"></div>
+
+        <!-- User Profile Avatar & Dropdown -->
+        <div class="dropdown-container">
+          <button 
+            type="button" 
+            class="profile-btn" 
+            [class.active]="userDropdownOpen()"
+            (click)="toggleUserDropdown($event)"
+            aria-label="User profile menu"
+          >
+            @if (currentUser()?.avatarUrl) {
+              <img [src]="currentUser()?.avatarUrl" alt="Avatar" class="avatar avatar-sm" style="object-fit: cover;" />
+            } @else {
+              <div class="avatar avatar-sm">{{ userInitials() }}</div>
+            }
+            <span class="profile-name">{{ userName() }}</span>
+            <span class="material-symbols-outlined arrow-icon">
+              {{ userDropdownOpen() ? 'expand_less' : 'expand_more' }}
+            </span>
+          </button>
+
+          <!-- User Profile Dropdown Menu -->
+          @if (userDropdownOpen()) {
+            <div class="dropdown-menu user-menu">
+              <div class="user-menu-header">
+                @if (currentUser()?.avatarUrl) {
+                  <img [src]="currentUser()?.avatarUrl" alt="Avatar" class="avatar" style="object-fit: cover;" />
+                } @else {
+                  <div class="avatar">{{ userInitials() }}</div>
+                }
+                <div class="user-meta">
+                  <div class="meta-name">{{ userName() }}</div>
+                  <div class="meta-email">{{ userEmail() }}</div>
+                  <span class="badge badge-primary" style="margin-top: 4px; align-self: flex-start;">
+                    {{ userRole() }}
+                  </span>
+                </div>
+              </div>
+
+              <div class="dropdown-divider"></div>
+
+              <div class="menu-items">
+                <a routerLink="/profile" (click)="closeAllDropdowns()" class="menu-item">
+                  <span class="material-symbols-outlined">account_circle</span>
+                  <span>My Profile</span>
+                </a>
+                <a routerLink="/settings" (click)="closeAllDropdowns()" class="menu-item">
+                  <span class="material-symbols-outlined">settings</span>
+                  <span>Workspace Settings</span>
+                </a>
+              </div>
+
+              <div class="dropdown-divider"></div>
+
+              <div class="menu-items">
+                <button type="button" (click)="onLogout()" class="menu-item menu-item-danger">
+                  <span class="material-symbols-outlined">logout</span>
+                  <span>Sign Out</span>
+                </button>
+              </div>
+            </div>
+          }
+        </div>
+      </div>
+    </header>
+
+    <!-- Page Content Container -->
+    <main class="content-area">
+      <router-outlet></router-outlet>
+    </main>
+  </div>
+</div>
+
+<!-- Quick Task Modal Dialog -->
+@if (quickTaskModalOpen()) {
+  <div class="modal-backdrop" (click)="closeQuickTaskModal()">
+    <div class="modal-dialog" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <div class="d-flex align-items-center gap-2">
+          <div class="brand-icon" style="width: 32px; height: 32px;">
+            <span class="material-symbols-outlined" style="font-size: 18px;">add_task</span>
+          </div>
+          <div>
+            <h3 class="modal-title">Create New Task</h3>
+            <p class="modal-subtitle">Add a quick task to your current workspace backlog.</p>
+          </div>
+        </div>
+        <button type="button" class="btn-icon" (click)="closeQuickTaskModal()" title="Close">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+
+      <div class="modal-body">
+        @if (quickTaskCreatedNotice()) {
+          <div class="alert-success">
+            <span class="material-symbols-outlined">check_circle</span>
+            <span>Task created successfully! Redirecting to task list...</span>
+          </div>
+        }
+
+        <div class="form-group">
+          <label class="form-label">Task Title *</label>
+          <input 
+            type="text" 
+            class="form-control" 
+            placeholder="e.g. Implement Responsive Dashboard Grid" 
+            [ngModel]="newQuickTaskTitle()"
+            (ngModelChange)="newQuickTaskTitle.set($event)"
+            (keyup.enter)="createQuickTask()"
+            autofocus
+          />
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Task Priority</label>
+          <div class="priority-selector">
+            <button 
+              type="button" 
+              class="priority-chip" 
+              [class.selected]="newQuickTaskPriority() === 'Low'"
+              (click)="newQuickTaskPriority.set('Low')"
+            >
+              <span class="priority-dot low"></span> Low
+            </button>
+            <button 
+              type="button" 
+              class="priority-chip" 
+              [class.selected]="newQuickTaskPriority() === 'Medium'"
+              (click)="newQuickTaskPriority.set('Medium')"
+            >
+              <span class="priority-dot medium"></span> Medium
+            </button>
+            <button 
+              type="button" 
+              class="priority-chip" 
+              [class.selected]="newQuickTaskPriority() === 'High'"
+              (click)="newQuickTaskPriority.set('High')"
+            >
+              <span class="priority-dot high"></span> High
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" (click)="closeQuickTaskModal()">
+          Cancel
+        </button>
+        <button 
+          type="button" 
+          class="btn btn-primary" 
+          (click)="createQuickTask()" 
+          [disabled]="!newQuickTaskTitle().trim()"
+        >
+          <span class="material-symbols-outlined">check</span>
+          <span>Create Task</span>
+        </button>
+      </div>
+    </div>
+  </div>
+}

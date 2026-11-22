@@ -1,0 +1,165 @@
+<div class="project-detail-page">
+  <!-- Back navigation header -->
+  <div class="detail-top-nav">
+    <a routerLink="/projects" class="btn btn-secondary btn-sm">
+      <span class="material-symbols-outlined">arrow_back</span>
+      <span>Back to Projects</span>
+    </a>
+  </div>
+
+  @if (isLoading()) {
+    <div class="card p-5 text-center">
+      <span class="material-symbols-outlined spinning-icon">sync</span>
+      <p style="margin-top: 8px; color: var(--color-text-secondary);">Loading project details...</p>
+    </div>
+  } @else if (!project()) {
+    <div class="card p-5 text-center">
+      <span class="material-symbols-outlined" style="font-size: 48px; color: var(--color-danger);">error_outline</span>
+      <h2 style="margin-top: 12px; font-size: 1.25rem;">Project Not Found</h2>
+      <p style="color: var(--color-text-secondary); margin-top: 4px;">The requested workspace does not exist or has been deleted.</p>
+      <a routerLink="/projects" class="btn btn-primary" style="margin-top: 16px;">View All Projects</a>
+    </div>
+  } @else {
+    <!-- Project Main Card Header -->
+    <header class="card project-header-card">
+      <div class="header-color-bar" [style.background-color]="project()!.color"></div>
+      <div class="card-body">
+        <div class="header-main-row">
+          <div class="title-group">
+            <div class="status-row">
+              <span class="badge" [ngClass]="getStatusBadgeClass(project()!.status)">
+                {{ project()!.status }}
+              </span>
+              <span class="date-tag">
+                <span class="material-symbols-outlined">calendar_today</span>
+                <span>{{ project()!.startDate }} – {{ project()!.dueDate }}</span>
+              </span>
+            </div>
+            <h1 class="project-title">{{ project()!.name }}</h1>
+            <p class="project-description">{{ project()!.description }}</p>
+          </div>
+
+          <div class="header-progress-box">
+            <div class="progress-circle-val">{{ project()!.progress }}%</div>
+            <span class="progress-circle-label">Calculated Progress</span>
+          </div>
+        </div>
+
+        <!-- Progress Bar Track -->
+        <div class="detail-progress-track">
+          <div 
+            class="detail-progress-fill" 
+            [style.width.%]="project()!.progress"
+            [style.background-color]="project()!.color"
+          ></div>
+        </div>
+
+        <!-- Project Stat Summary Pills -->
+        <div class="stats-pills-row">
+          <div class="stat-pill">
+            <span class="material-symbols-outlined">assignment</span>
+            <span><strong>{{ tasks().length }}</strong> Total Tasks</span>
+          </div>
+          <div class="stat-pill success">
+            <span class="material-symbols-outlined">check_circle</span>
+            <span><strong>{{ completedTasks() }}</strong> Completed</span>
+          </div>
+          <div class="stat-pill warning">
+            <span class="material-symbols-outlined">pending</span>
+            <span><strong>{{ inProgressTasks() }}</strong> In Progress</span>
+          </div>
+          <div class="stat-pill info">
+            <span class="material-symbols-outlined">schedule</span>
+            <span><strong>{{ pendingTasks() }}</strong> To Do</span>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Tasks Belonging to this Project Section -->
+    <section class="card tasks-section-card">
+      <div class="card-header">
+        <div class="d-flex align-items-center gap-2">
+          <span class="material-symbols-outlined text-primary">task_alt</span>
+          <div>
+            <h2 class="card-title">Project Tasks</h2>
+            <span class="card-subtitle">Backlog deliverables tracked for this milestone</span>
+          </div>
+        </div>
+        <a routerLink="/board" class="btn btn-secondary btn-sm">
+          <span class="material-symbols-outlined">view_kanban</span>
+          <span>Open in Kanban Board</span>
+        </a>
+      </div>
+
+      <div class="card-body p-0">
+        @if (tasks().length === 0) {
+          <div class="empty-tasks-state">
+            <span class="material-symbols-outlined empty-icon">assignment_late</span>
+            <h3>No Tasks In This Project</h3>
+            <p>This workspace has no active tasks assigned yet.</p>
+          </div>
+        } @else {
+          <div class="tasks-table-wrapper">
+            <table class="tasks-table">
+              <thead>
+                <tr>
+                  <th>Status</th>
+                  <th>Task Title</th>
+                  <th>Priority</th>
+                  <th>Due Date</th>
+                  <th>Assignee</th>
+                  <th style="text-align: right;">Action</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (task of tasks(); track task.id) {
+                  <tr [class.task-done]="task.status === 'Completed'">
+                    <td style="width: 120px;">
+                      <span class="status-pill status-{{ task.status.toLowerCase().replace(' ', '-') }}">
+                        {{ task.status }}
+                      </span>
+                    </td>
+                    <td>
+                      <strong class="task-title-text">{{ task.title }}</strong>
+                      <p class="task-desc-text">{{ task.description }}</p>
+                    </td>
+                    <td>
+                      <span class="badge" [ngClass]="getPriorityBadgeClass(task.priority)">
+                        {{ task.priority }}
+                      </span>
+                    </td>
+                    <td class="cell-date">
+                      <span class="material-symbols-outlined">event</span>
+                      {{ task.dueDate | date:'mediumDate' }}
+                    </td>
+                    <td>
+                      <div class="assignee-chip">
+                        <div class="avatar avatar-sm">{{ task.assignee?.name?.charAt(0) || 'U' }}</div>
+                        <span>{{ task.assignee?.name || 'Unassigned' }}</span>
+                      </div>
+                    </td>
+                    <td style="text-align: right;">
+                      <button 
+                        type="button" 
+                        class="btn-toggle-status" 
+                        (click)="markTaskCompleted(task, $event)"
+                        [title]="task.status === 'Completed' ? 'Reopen task' : 'Mark task completed'"
+                      >
+                        <span class="material-symbols-outlined">
+                          {{ task.status === 'Completed' ? 'restart_alt' : 'check_circle' }}
+                        </span>
+                        <span>{{ task.status === 'Completed' ? 'Reopen' : 'Done' }}</span>
+                      </button>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        }
+      </div>
+    </section>
+  }
+</div>
+

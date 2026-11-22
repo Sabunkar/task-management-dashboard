@@ -1,0 +1,417 @@
+<div class="dashboard-page">
+  <!-- Loading State Indicator -->
+  @if (isLoading()) {
+    <div class="card loading-card">
+      <div class="spinner-ring"></div>
+      <div class="loading-text">
+        <strong>Syncing workspace statistics...</strong>
+        <p>Calculating project velocities and backlog distribution from RxJS streams.</p>
+      </div>
+    </div>
+  }
+
+  <!-- Error State Alert -->
+  @if (errorMessage()) {
+    <div class="card error-card">
+      <div class="error-icon-box">
+        <span class="material-symbols-outlined">error</span>
+      </div>
+      <div class="error-content">
+        <strong>Failed to load dashboard data</strong>
+        <p>{{ errorMessage() }}</p>
+      </div>
+      <button type="button" class="btn btn-secondary btn-sm" (click)="loadDashboardData()">
+        <span class="material-symbols-outlined">refresh</span>
+        <span>Retry</span>
+      </button>
+    </div>
+  }
+
+  <!-- Main Dashboard Content -->
+  @if (!isLoading() && !errorMessage()) {
+    <!-- A. Welcome Section -->
+    <header class="welcome-header card">
+      <div class="welcome-left">
+        <div class="welcome-avatar-chip">
+          @if (currentUser()?.avatarUrl) {
+            <img [src]="currentUser()?.avatarUrl" alt="Avatar" class="avatar-img" />
+          } @else {
+            <div class="avatar-initials">{{ userInitials() }}</div>
+          }
+          <span class="online-indicator" title="Connected to workspace"></span>
+        </div>
+
+        <div class="welcome-content">
+          <div class="date-badge">
+            <span class="material-symbols-outlined">calendar_today</span>
+            <span>{{ currentFormattedDate() }}</span>
+          </div>
+          <h1 class="welcome-title">{{ greeting() }}, {{ userName() }}! 👋</h1>
+          <p class="welcome-subtitle">
+            Here's a bird's-eye view of your active workspaces, sprint velocity, and upcoming deadlines.
+          </p>
+        </div>
+      </div>
+
+      <div class="welcome-actions">
+        <a routerLink="/analytics" class="btn btn-secondary">
+          <span class="material-symbols-outlined">monitoring</span>
+          <span>View Analytics</span>
+        </a>
+        <a routerLink="/tasks" [queryParams]="{ action: 'new' }" class="btn btn-primary">
+          <span class="material-symbols-outlined">add</span>
+          <span>Create Task</span>
+        </a>
+      </div>
+    </header>
+
+    <!-- B. Statistics Metric Cards (4 Cards) -->
+    <section class="metrics-grid">
+      <!-- 1. Total Tasks -->
+      <div class="card metric-card">
+        <div class="metric-top">
+          <span class="metric-label">Total Deliverables</span>
+          <div class="metric-icon-box bg-primary-light text-primary">
+            <span class="material-symbols-outlined">assignment</span>
+          </div>
+        </div>
+        <div class="metric-main">
+          <span class="metric-value">{{ totalTasksCount() }}</span>
+          <div class="metric-trend-row">
+            <span class="trend-badge trend-neutral">
+              {{ projects().length }} Workspaces
+            </span>
+            <span class="trend-subtext">tracked across backlog</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. Completed Tasks -->
+      <div class="card metric-card">
+        <div class="metric-top">
+          <span class="metric-label">Completed Tasks</span>
+          <div class="metric-icon-box bg-success-light text-success">
+            <span class="material-symbols-outlined">check_circle</span>
+          </div>
+        </div>
+        <div class="metric-main">
+          <span class="metric-value text-success">{{ completedTasksCount() }}</span>
+          <div class="metric-trend-row">
+            <span class="trend-badge trend-up">
+              <span class="material-symbols-outlined trend-icon">trending_up</span>
+              {{ completionPercentage() }}% Rate
+            </span>
+            <span class="trend-subtext">sprint velocity</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3. In Progress Tasks -->
+      <div class="card metric-card">
+        <div class="metric-top">
+          <span class="metric-label">In Progress</span>
+          <div class="metric-icon-box bg-warning-light text-warning">
+            <span class="material-symbols-outlined">autorenew</span>
+          </div>
+        </div>
+        <div class="metric-main">
+          <span class="metric-value text-warning">{{ inProgressTasksCount() }}</span>
+          <div class="metric-trend-row">
+            <span class="trend-badge trend-neutral">
+              {{ pendingTasksCount() }} To Do
+            </span>
+            <span class="trend-subtext">active in sprint</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4. Overdue Tasks -->
+      <div class="card metric-card" [class.border-danger-highlight]="overdueTasksCount() > 0">
+        <div class="metric-top">
+          <span class="metric-label">Overdue Tasks</span>
+          <div 
+            class="metric-icon-box"
+            [ngClass]="overdueTasksCount() > 0 ? 'bg-danger-light text-danger' : 'bg-slate-light text-muted'"
+          >
+            <span class="material-symbols-outlined">warning</span>
+          </div>
+        </div>
+        <div class="metric-main">
+          <span class="metric-value" [class.text-danger]="overdueTasksCount() > 0">
+            {{ overdueTasksCount() }}
+          </span>
+          <div class="metric-trend-row">
+            @if (overdueTasksCount() > 0) {
+              <span class="trend-badge trend-danger">
+                Attention Required
+              </span>
+              <span class="trend-subtext text-danger">past deadline</span>
+            } @else {
+              <span class="trend-badge trend-up text-success">
+                <span class="material-symbols-outlined trend-icon">done_all</span>
+                On Schedule
+              </span>
+              <span class="trend-subtext">zero overdue items</span>
+            }
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Visualizations Grid: Weekly Productivity & Status Distribution -->
+    <section class="dashboard-split-grid">
+      <!-- C. Weekly Productivity Chart -->
+      <div class="card chart-card two-thirds-col">
+        <div class="card-header">
+          <div class="header-title-box">
+            <span class="material-symbols-outlined card-header-icon text-primary">bar_chart</span>
+            <div>
+              <h2 class="card-title">Weekly Task Velocity</h2>
+              <span class="card-subtitle">Completed vs Created deliverables over the past 7 days</span>
+            </div>
+          </div>
+          <span class="badge badge-primary">Past 7 Days</span>
+        </div>
+        <div class="card-body">
+          <app-svg-weekly-productivity-chart
+            [weekData]="weeklyProductivityData()"
+            [totalCompleted]="totalWeeklyCompleted()"
+          ></app-svg-weekly-productivity-chart>
+        </div>
+      </div>
+
+      <!-- D. Task Status Distribution (Donut Chart) -->
+      <div class="card chart-card one-third-col">
+        <div class="card-header">
+          <div class="header-title-box">
+            <span class="material-symbols-outlined card-header-icon text-success">donut_large</span>
+            <div>
+              <h2 class="card-title">Backlog Distribution</h2>
+              <span class="card-subtitle">Deliverables by workflow status</span>
+            </div>
+          </div>
+          <span class="badge badge-success">{{ completionPercentage() }}% Done</span>
+        </div>
+        <div class="card-body">
+          <app-svg-donut-chart
+            [items]="statusDistribution()"
+            centerTitle="Total Tasks"
+            [centerValue]="totalTasksCount()"
+          ></app-svg-donut-chart>
+        </div>
+      </div>
+    </section>
+
+    <!-- Middle Grid: Project Overview & Upcoming Deadlines -->
+    <section class="dashboard-split-grid">
+      <!-- E. Project Overview Section -->
+      <div class="card projects-overview-card two-thirds-col">
+        <div class="card-header">
+          <div class="header-title-box">
+            <span class="material-symbols-outlined card-header-icon text-info">grid_view</span>
+            <div>
+              <h2 class="card-title">Active Projects</h2>
+              <span class="card-subtitle">Milestone velocity and deliverable progress</span>
+            </div>
+          </div>
+          <a routerLink="/projects" class="btn btn-secondary btn-sm">
+            <span>View All Projects</span>
+            <span class="material-symbols-outlined">arrow_forward</span>
+          </a>
+        </div>
+
+        <div class="card-body">
+          @if (projects().length === 0) {
+            <div class="empty-inline-state">
+              <span class="material-symbols-outlined empty-icon">folder_off</span>
+              <p>No projects available in this workspace.</p>
+              <a routerLink="/projects" class="btn btn-primary btn-sm">Create New Project</a>
+            </div>
+          } @else {
+            <div class="projects-grid">
+              @for (project of projects(); track project.id) {
+                <a [routerLink]="['/projects', project.id]" class="project-subcard">
+                  <div class="subcard-header">
+                    <div class="subcard-title-group">
+                      <div class="project-dot" [style.background-color]="project.color"></div>
+                      <h3 class="project-name">{{ project.name }}</h3>
+                    </div>
+                    <span class="badge" [ngClass]="getProjectStatusClass(project.status)">
+                      {{ project.status }}
+                    </span>
+                  </div>
+
+                  <p class="project-desc">{{ project.description }}</p>
+
+                  <!-- Dynamic Progress Bar -->
+                  <div class="project-progress-box">
+                    <div class="progress-bar-row">
+                      <span class="progress-label">Milestone Progress</span>
+                      <strong class="progress-val">{{ project.progress }}%</strong>
+                    </div>
+                    <div class="progress-track">
+                      <div 
+                        class="progress-fill" 
+                        [style.width.%]="project.progress"
+                        [style.background-color]="project.color"
+                      ></div>
+                    </div>
+                  </div>
+
+                  <div class="subcard-footer">
+                    <div class="tasks-count">
+                      <span class="material-symbols-outlined">check_box</span>
+                      <span>{{ project.completedTasksCount }}/{{ project.tasksCount }} tasks done</span>
+                    </div>
+                    <div class="members-tag">
+                      <span class="material-symbols-outlined">calendar_today</span>
+                      <span>{{ project.dueDate }}</span>
+                    </div>
+                  </div>
+                </a>
+              }
+            </div>
+          }
+        </div>
+      </div>
+
+      <!-- F. Upcoming Deadlines Section -->
+      <div class="card deadlines-card one-third-col">
+        <div class="card-header">
+          <div class="header-title-box">
+            <span class="material-symbols-outlined card-header-icon text-warning">alarm</span>
+            <div>
+              <h2 class="card-title">Upcoming Deadlines</h2>
+              <span class="card-subtitle">Tasks requiring attention</span>
+            </div>
+          </div>
+
+          <!-- Filter Toggle -->
+          <div class="pill-toggle">
+            <button 
+              type="button" 
+              class="pill-btn" 
+              [class.active]="upcomingFilter() === 'all'"
+              (click)="setUpcomingFilter('all')"
+            >
+              All
+            </button>
+            <button 
+              type="button" 
+              class="pill-btn" 
+              [class.active]="upcomingFilter() === 'high'"
+              (click)="setUpcomingFilter('high')"
+            >
+              High
+            </button>
+          </div>
+        </div>
+
+        <div class="card-body p-0">
+          @if (filteredUpcomingTasks().length === 0) {
+            <div class="empty-inline-state">
+              <span class="material-symbols-outlined empty-icon">task_alt</span>
+              <p>No upcoming task deadlines found matching this filter.</p>
+            </div>
+          } @else {
+            <div class="deadline-list">
+              @for (task of filteredUpcomingTasks(); track task.id) {
+                <div class="deadline-item">
+                  <div class="deadline-main">
+                    <div class="deadline-header-row">
+                      <span class="project-tag">{{ task.projectName }}</span>
+                      <span class="badge" [ngClass]="getPriorityBadgeClass(task.priority)">
+                        {{ task.priority }}
+                      </span>
+                    </div>
+                    <h4 class="deadline-title">{{ task.title }}</h4>
+                    <div class="deadline-meta-row">
+                      <span class="meta-date">
+                        <span class="material-symbols-outlined">event</span>
+                        {{ task.dueDate }}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div class="deadline-right-col">
+                    <span 
+                      class="urgency-badge" 
+                      [class.urgent]="task.urgency === 'urgent'"
+                      [class.warning]="task.urgency === 'warning'"
+                    >
+                      {{ task.daysRemainingText }}
+                    </span>
+                    <button 
+                      type="button" 
+                      class="btn-mark-done" 
+                      (click)="markTaskCompleted(task.id, task.title, $event)"
+                      title="Quick mark completed (updates RxJS streams)"
+                    >
+                      <span class="material-symbols-outlined">check</span>
+                      <span>Done</span>
+                    </button>
+                  </div>
+                </div>
+              }
+            </div>
+          }
+        </div>
+
+        <div class="card-footer">
+          <a routerLink="/tasks" class="footer-action-link">
+            <span>Manage All Task Deadlines</span>
+            <span class="material-symbols-outlined">arrow_forward</span>
+          </a>
+        </div>
+      </div>
+    </section>
+
+    <!-- G. Recent Activity Timeline -->
+    <section class="card activity-card">
+      <div class="card-header">
+        <div class="header-title-box">
+          <span class="material-symbols-outlined card-header-icon text-success">history</span>
+          <div>
+            <h2 class="card-title">Recent Workspace Activity</h2>
+            <span class="card-subtitle">Live audit stream of mutations and project updates</span>
+          </div>
+        </div>
+        <span class="badge badge-info">Live Stream</span>
+      </div>
+
+      <div class="card-body">
+        @if (activities().length === 0) {
+          <div class="empty-inline-state">
+            <span class="material-symbols-outlined empty-icon">notifications_off</span>
+            <p>No recent activity recorded yet.</p>
+          </div>
+        } @else {
+          <div class="timeline">
+            @for (act of activities(); track act.id) {
+              <div class="timeline-item">
+                <div class="timeline-avatar">
+                  {{ act.user.charAt(0) }}
+                </div>
+                <div class="timeline-content">
+                  <p class="timeline-text">
+                    <strong>{{ act.user }}</strong>
+                    <span class="timeline-action"> {{ act.action }} </span>
+                    <span class="timeline-target">"{{ act.target }}"</span>
+                  </p>
+                  <span class="timeline-time">{{ act.timestamp }}</span>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </div>
+
+      <div class="card-footer">
+        <a routerLink="/notifications" class="footer-action-link">
+          <span>View Full Activity & Notifications</span>
+          <span class="material-symbols-outlined">arrow_forward</span>
+        </a>
+      </div>
+    </section>
+  }
+</div>

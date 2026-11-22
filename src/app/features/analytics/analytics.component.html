@@ -1,0 +1,517 @@
+<div class="analytics-page">
+  <!-- Feedback Notice Toast -->
+  @if (exportToast()) {
+    <div class="feedback-toast d-print-none">
+      <span class="material-symbols-outlined">download_done</span>
+      <span>{{ exportToast() }}</span>
+    </div>
+  }
+
+  <!-- Print Only Header Banner -->
+  <div class="print-only-header">
+    <div class="print-brand">
+      <span class="brand-title">PulseTask Workspace Performance Report</span>
+      <span class="brand-meta">Generated on: {{ reportGeneratedDate() }} | Scope: {{ activeRangeLabel() }}</span>
+    </div>
+  </div>
+
+  <!-- Screen Header -->
+  <header class="page-header d-print-none">
+    <div>
+      <div class="d-flex align-items-center gap-2">
+        <h1 class="page-title">Reports & Analytics</h1>
+        <span class="badge badge-primary">Pulse Intelligence</span>
+      </div>
+      <p class="page-subtitle">
+        Real-time velocity, resource allocation, milestone progress, and team productivity observations.
+      </p>
+    </div>
+
+    <!-- Export & Print Actions -->
+    <div class="header-actions">
+      <div class="export-dropdown-wrapper">
+        <button type="button" class="btn btn-secondary" (click)="exportTasksCsv()" title="Download Tasks Data as CSV">
+          <span class="material-symbols-outlined">table_view</span>
+          <span>Tasks CSV</span>
+        </button>
+        <button type="button" class="btn btn-secondary" (click)="exportProjectsCsv()" title="Download Projects Data as CSV">
+          <span class="material-symbols-outlined">analytics</span>
+          <span>Projects CSV</span>
+        </button>
+      </div>
+
+      <button type="button" class="btn btn-primary print-action-btn" (click)="printReport()" title="Print or save as PDF">
+        <span class="material-symbols-outlined">print</span>
+        <span>Print Report</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Date Range Filter Toolbar (Screen Only) -->
+  <section class="card filter-toolbar-card d-print-none">
+    <div class="filter-toolbar">
+      <div class="filter-presets-group">
+        <span class="filter-group-label">Timeframe:</span>
+        <div class="filter-pills">
+          <button 
+            type="button" 
+            class="filter-pill-btn" 
+            [class.active]="selectedPreset() === 'last_7_days'"
+            (click)="setPreset('last_7_days')"
+          >
+            Last 7 Days
+          </button>
+          <button 
+            type="button" 
+            class="filter-pill-btn" 
+            [class.active]="selectedPreset() === 'last_30_days'"
+            (click)="setPreset('last_30_days')"
+          >
+            Last 30 Days
+          </button>
+          <button 
+            type="button" 
+            class="filter-pill-btn" 
+            [class.active]="selectedPreset() === 'last_90_days'"
+            (click)="setPreset('last_90_days')"
+          >
+            Last 90 Days
+          </button>
+          <button 
+            type="button" 
+            class="filter-pill-btn" 
+            [class.active]="selectedPreset() === 'this_year'"
+            (click)="setPreset('this_year')"
+          >
+            This Year
+          </button>
+          <button 
+            type="button" 
+            class="filter-pill-btn" 
+            [class.active]="selectedPreset() === 'all_time'"
+            (click)="setPreset('all_time')"
+          >
+            All Time
+          </button>
+          <button 
+            type="button" 
+            class="filter-pill-btn" 
+            [class.active]="selectedPreset() === 'custom'"
+            (click)="setPreset('custom')"
+          >
+            Custom Range
+          </button>
+        </div>
+      </div>
+
+      @if (selectedPreset() === 'custom') {
+        <div class="custom-range-row">
+          <div class="custom-date-box">
+            <label class="custom-label">From:</label>
+            <input 
+              type="date" 
+              class="custom-date-input" 
+              [ngModel]="customStartDate()" 
+              (ngModelChange)="customStartDate.set($event)"
+            />
+          </div>
+          <div class="custom-date-box">
+            <label class="custom-label">To:</label>
+            <input 
+              type="date" 
+              class="custom-date-input" 
+              [ngModel]="customEndDate()" 
+              (ngModelChange)="customEndDate.set($event)"
+            />
+          </div>
+          <button type="button" class="btn btn-sm btn-primary" (click)="applyCustomRange()">
+            Apply Range
+          </button>
+        </div>
+      }
+
+      <div class="active-range-indicator">
+        <span class="material-symbols-outlined indicator-icon">date_range</span>
+        <span>Active Period: <strong>{{ activeRangeLabel() }}</strong></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Period Activity Notice -->
+  <div class="card period-summary-banner">
+    <div class="summary-stat-item">
+      <span class="material-symbols-outlined summary-icon text-primary">add_circle</span>
+      <div>
+        <span class="summary-label">Created in {{ activeRangeLabel() }}:</span>
+        <strong class="summary-val">{{ overviewMetrics().createdInPeriodCount }} Tasks</strong>
+      </div>
+    </div>
+    <div class="summary-divider"></div>
+    <div class="summary-stat-item">
+      <span class="material-symbols-outlined summary-icon text-success">task_alt</span>
+      <div>
+        <span class="summary-label">Completed in {{ activeRangeLabel() }}:</span>
+        <strong class="summary-val">{{ overviewMetrics().completedInPeriodCount }} Tasks</strong>
+      </div>
+    </div>
+    <div class="summary-divider"></div>
+    <div class="summary-stat-item">
+      <span class="material-symbols-outlined summary-icon text-warning">speed</span>
+      <div>
+        <span class="summary-label">Current Completion Rate:</span>
+        <strong class="summary-val">{{ overviewMetrics().taskCompletionRate }}%</strong>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section A: Overview Metrics Cards -->
+  <section class="overview-metrics-grid">
+    <!-- Total Tasks -->
+    <div class="card metric-card">
+      <div class="metric-icon-box bg-primary-light text-primary">
+        <span class="material-symbols-outlined">assignment</span>
+      </div>
+      <div class="metric-meta">
+        <span class="metric-label">Total Backlog</span>
+        <strong class="metric-value">{{ overviewMetrics().totalTasks }}</strong>
+        <span class="metric-hint">{{ overviewMetrics().pendingTasks }} Pending | {{ overviewMetrics().inProgressTasks }} In Progress</span>
+      </div>
+    </div>
+
+    <!-- Completed Tasks -->
+    <div class="card metric-card">
+      <div class="metric-icon-box bg-success-light text-success">
+        <span class="material-symbols-outlined">check_circle</span>
+      </div>
+      <div class="metric-meta">
+        <span class="metric-label">Completed Tasks</span>
+        <strong class="metric-value">{{ overviewMetrics().completedTasks }}</strong>
+        <span class="metric-hint text-success font-weight-bold">{{ overviewMetrics().taskCompletionRate }}% Completion Velocity</span>
+      </div>
+    </div>
+
+    <!-- Overdue Tasks -->
+    <div class="card metric-card" [class.border-danger]="overviewMetrics().overdueTasks > 0">
+      <div class="metric-icon-box" [ngClass]="overviewMetrics().overdueTasks > 0 ? 'bg-danger-light text-danger' : 'bg-slate-light text-muted'">
+        <span class="material-symbols-outlined">warning</span>
+      </div>
+      <div class="metric-meta">
+        <span class="metric-label">Overdue Tasks</span>
+        <strong class="metric-value" [class.text-danger]="overviewMetrics().overdueTasks > 0">
+          {{ overviewMetrics().overdueTasks }}
+        </strong>
+        <span class="metric-hint" [class.text-danger]="overviewMetrics().overdueTasks > 0">
+          {{ overviewMetrics().overdueTasks > 0 ? 'Past deadline' : 'Zero overdue items' }}
+        </span>
+      </div>
+    </div>
+
+    <!-- Projects Summary -->
+    <div class="card metric-card">
+      <div class="metric-icon-box bg-info-light text-info">
+        <span class="material-symbols-outlined">folder_managed</span>
+      </div>
+      <div class="metric-meta">
+        <span class="metric-label">Total Projects</span>
+        <strong class="metric-value">{{ overviewMetrics().totalProjects }}</strong>
+        <span class="metric-hint">{{ overviewMetrics().activeProjects }} Active | {{ overviewMetrics().completedProjects }} Finished</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Section B: Task Analytics Visualizations -->
+  <section class="analytics-row">
+    <!-- Task Distribution by Status -->
+    <div class="card chart-card">
+      <div class="card-header">
+        <div>
+          <h3 class="card-title">Task Distribution by Status</h3>
+          <p class="card-subtitle">Backlog allocation across workflow stages</p>
+        </div>
+        <span class="badge badge-primary">{{ overviewMetrics().totalTasks }} Total</span>
+      </div>
+      <div class="card-body">
+        <app-svg-donut-chart
+          [items]="statusDistribution()"
+          centerTitle="Tasks"
+          [centerValue]="overviewMetrics().totalTasks"
+        ></app-svg-donut-chart>
+      </div>
+    </div>
+
+    <!-- Task Distribution by Priority -->
+    <div class="card chart-card">
+      <div class="card-header">
+        <div>
+          <h3 class="card-title">Task Distribution by Priority</h3>
+          <p class="card-subtitle">Risk and urgency weighting breakdown</p>
+        </div>
+      </div>
+      <div class="card-body">
+        <app-svg-donut-chart
+          [items]="priorityDistribution()"
+          centerTitle="Priority"
+          [centerValue]="overviewMetrics().totalTasks"
+        ></app-svg-donut-chart>
+      </div>
+    </div>
+
+    <!-- Health Breakdown: Completed vs Pending & Overdue vs On-Time -->
+    <div class="card chart-card">
+      <div class="card-header">
+        <div>
+          <h3 class="card-title">Delivery Health & Velocity</h3>
+          <p class="card-subtitle">Execution ratios and deadline compliance</p>
+        </div>
+      </div>
+      <div class="card-body health-metrics-body">
+        <!-- Velocity Progress -->
+        <div class="health-block">
+          <div class="d-flex justify-content-between align-items-center mb-1">
+            <span class="health-label">Completion Velocity (Completed vs Pending)</span>
+            <span class="health-val">{{ overviewMetrics().completedTasks }} / {{ overviewMetrics().totalTasks }}</span>
+          </div>
+          <div class="progress-bar-track">
+            <div 
+              class="progress-bar-fill bg-success" 
+              [style.width.%]="overviewMetrics().taskCompletionRate"
+            ></div>
+          </div>
+          <span class="health-hint">{{ overviewMetrics().taskCompletionRate }}% of deliverables finished</span>
+        </div>
+
+        <!-- Overdue Ratio -->
+        <div class="health-block">
+          <div class="d-flex justify-content-between align-items-center mb-1">
+            <span class="health-label">On-Time Delivery Compliance</span>
+            <span class="health-val text-success">
+              {{ overviewMetrics().totalTasks - overviewMetrics().overdueTasks }} On-Time
+            </span>
+          </div>
+          <div class="progress-bar-track">
+            <div 
+              class="progress-bar-fill bg-primary" 
+              [style.width.%]="overviewMetrics().totalTasks > 0 ? (100 - (overviewMetrics().overdueTasks / overviewMetrics().totalTasks) * 100) : 100"
+            ></div>
+          </div>
+          <span class="health-hint">
+            @if (overviewMetrics().overdueTasks > 0) {
+              <strong class="text-danger">{{ overviewMetrics().overdueTasks }} task(s)</strong> require immediate unblocking
+            } @else {
+              <span class="text-success">100% on-time milestone delivery</span>
+            }
+          </span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Task Completion Trends Over Time -->
+  <section class="card chart-card full-width-card">
+    <div class="card-header">
+      <div>
+        <div class="d-flex align-items-center gap-2">
+          <h3 class="card-title">Task Completion Trends Over Time</h3>
+          <span class="badge badge-info">{{ activeRangeLabel() }}</span>
+        </div>
+        <p class="card-subtitle">Tracking daily creation and completion velocity</p>
+      </div>
+      @if (trendAnalysis().peakCompletionDay) {
+        <span class="badge badge-success">
+          Peak Velocity: {{ trendAnalysis().peakCompletionDay }}
+        </span>
+      }
+    </div>
+    <div class="card-body">
+      <app-svg-trend-chart
+        [points]="trendAnalysis().points"
+        [hasSufficientData]="trendAnalysis().hasSufficientData"
+      ></app-svg-trend-chart>
+    </div>
+  </section>
+
+  <!-- Section C: Project Analytics -->
+  <section class="analytics-row">
+    <!-- Project Progress Comparison -->
+    <div class="card chart-card two-thirds-card">
+      <div class="card-header">
+        <div>
+          <h3 class="card-title">Project Progress Comparison</h3>
+          <p class="card-subtitle">Milestone completion percentages by project workspace</p>
+        </div>
+        <span class="badge badge-primary">{{ projectAnalytics().length }} Projects</span>
+      </div>
+      <div class="card-body">
+        <app-svg-bar-chart [items]="projectBarItems()"></app-svg-bar-chart>
+      </div>
+    </div>
+
+    <!-- Projects Needing Attention -->
+    <div class="card chart-card one-third-card">
+      <div class="card-header">
+        <div>
+          <h3 class="card-title">Needs Attention</h3>
+          <p class="card-subtitle">Projects with overdue tasks or schedule risks</p>
+        </div>
+      </div>
+      <div class="card-body">
+        @if (projectsNeedingAttention().length === 0) {
+          <div class="alert-empty-box">
+            <span class="material-symbols-outlined text-success">verified</span>
+            <h4>All Workspaces On Track</h4>
+            <p>No project workspaces currently report overdue tasks or critical deadline slips.</p>
+          </div>
+        } @else {
+          <div class="attention-list">
+            @for (p of projectsNeedingAttention(); track p.id) {
+              <div class="attention-card">
+                <div class="d-flex align-items-center justify-content-between">
+                  <strong class="attention-name">{{ p.name }}</strong>
+                  <span class="badge badge-danger">Risk Alert</span>
+                </div>
+                <p class="attention-reason">{{ p.attentionReason }}</p>
+                <div class="attention-footer">
+                  <span>Progress: <strong>{{ p.progress }}%</strong></span>
+                  <span>Due: {{ p.dueDate }}</span>
+                </div>
+              </div>
+            }
+          </div>
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- Projects Workspaces Performance Table -->
+  <section class="card table-container-card">
+    <div class="card-header">
+      <div>
+        <h3 class="card-title">Workspace Performance Audit</h3>
+        <p class="card-subtitle">Detailed milestone metrics per initiative</p>
+      </div>
+    </div>
+    <div class="table-responsive">
+      <table class="analytics-table">
+        <thead>
+          <tr>
+            <th>Project Workspace</th>
+            <th>Status</th>
+            <th>Progress</th>
+            <th>Deliverables Ratio</th>
+            <th>Due Date</th>
+            <th>Health Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (proj of projectAnalytics(); track proj.id) {
+            <tr>
+              <td>
+                <div class="d-flex align-items-center gap-2">
+                  <span class="project-dot" [style.background-color]="proj.color"></span>
+                  <strong>{{ proj.name }}</strong>
+                </div>
+              </td>
+              <td>
+                <span 
+                  class="badge"
+                  [ngClass]="proj.status === 'Completed' ? 'badge-success' : (proj.status === 'Active' ? 'badge-primary' : 'badge-warning')"
+                >
+                  {{ proj.status }}
+                </span>
+              </td>
+              <td>
+                <div class="d-flex align-items-center gap-2">
+                  <div class="table-progress-bar">
+                    <div 
+                      class="table-progress-fill" 
+                      [style.width.%]="proj.progress"
+                      [style.background-color]="proj.color"
+                    ></div>
+                  </div>
+                  <span class="font-weight-bold" style="font-size: 0.8125rem;">{{ proj.progress }}%</span>
+                </div>
+              </td>
+              <td>
+                <span class="ratio-badge">
+                  {{ proj.completedTasks }} / {{ proj.totalTasks }} Tasks
+                </span>
+              </td>
+              <td>
+                <span class="date-text">{{ proj.dueDate }}</span>
+              </td>
+              <td>
+                @if (proj.needsAttention) {
+                  <span class="badge badge-danger">Attention Required</span>
+                } @else if (proj.status === 'Completed') {
+                  <span class="badge badge-success">Completed</span>
+                } @else {
+                  <span class="badge badge-info">On Schedule</span>
+                }
+              </td>
+            </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- Section D: Productivity Insights -->
+  <section class="insights-grid">
+    <!-- Most Productive Period -->
+    <div class="card insight-card">
+      <div class="insight-header">
+        <span class="material-symbols-outlined insight-icon text-primary">calendar_month</span>
+        <h4 class="insight-title">Most Productive Period</h4>
+      </div>
+      @if (productivityInsights().mostProductivePeriod) {
+        <strong class="insight-highlight">
+          {{ productivityInsights().mostProductivePeriod!.period }}s
+        </strong>
+        <p class="insight-desc">
+          {{ productivityInsights().mostProductivePeriod!.detail }} based on recorded task completion events.
+        </p>
+      } @else {
+        <p class="insight-desc text-muted">
+          Insufficient task completion timestamps in the selected range to establish a peak completion day.
+        </p>
+      }
+    </div>
+
+    <!-- Top Performing Projects -->
+    <div class="card insight-card">
+      <div class="insight-header">
+        <span class="material-symbols-outlined insight-icon text-success">military_tech</span>
+        <h4 class="insight-title">Highest Completion Rates</h4>
+      </div>
+      @if (productivityInsights().topProjects.length > 0) {
+        <div class="top-projects-list">
+          @for (proj of productivityInsights().topProjects; track proj.id) {
+            <div class="top-proj-item">
+              <span class="proj-name">{{ proj.name }}</span>
+              <strong class="proj-rate text-success">{{ proj.completionRate }}%</strong>
+            </div>
+          }
+        </div>
+      } @else {
+        <p class="insight-desc text-muted">No completed projects recorded.</p>
+      }
+    </div>
+
+    <!-- Workload & Priority Observations -->
+    <div class="card insight-card">
+      <div class="insight-header">
+        <span class="material-symbols-outlined insight-icon text-warning">insights</span>
+        <h4 class="insight-title">Workload Observations</h4>
+      </div>
+      <ul class="observations-list">
+        @for (obs of productivityInsights().workloadObservations; track obs) {
+          <li class="obs-item">
+            <span class="material-symbols-outlined obs-dot text-primary">arrow_right</span>
+            <span>{{ obs }}</span>
+          </li>
+        }
+      </ul>
+    </div>
+  </section>
+</div>
+
